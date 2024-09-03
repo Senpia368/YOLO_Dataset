@@ -1,6 +1,7 @@
 import os
 import shutil
 from collections import defaultdict
+import random
 
 class Dataset:
 
@@ -135,16 +136,50 @@ class Dataset:
                     file.writelines(lines)
 
 
+    def randomly_split_train_val(self,val_count):
+        '''
+        Randomly picks images and moves them and their labels to the validation set
+        val_count: number of images to move to validation set
+        '''
+        train_images_path = os.path.join(self.images,'train')
+        train_labels_path = os.path.join(self.labels, 'train')
 
-            
+        val_images_path = os.path.join(self.images, 'val')
+        os.makedirs(val_images_path, exist_ok=True)
 
-    
+        val_labels_path = os.path.join(self.labels, 'val')
+        os.makedirs(val_labels_path, exist_ok=True)
+
+        images_list = os.listdir(train_images_path)
+        val_images_set = set()
+
+        if val_count > len(images_list):
+            raise ValueError(f'Exceeded maximum number of images: {len(images_list)}')
+
+        while val_count > 0:
+            random_number = random.randint(0,len(images_list)-1)
+            print(random_number)
+            val_images_set.add(self.get_filename(images_list.pop(random_number)))
+
+            val_count -= 1
+        
+        path_type_dict = {
+            val_labels_path: '.txt',
+            val_images_path: '.jpg'
+        }
+
+        for filename in val_images_set:
+            for destination_folder, filetype in path_type_dict.items():
+                destination_path = os.path.join(destination_folder, filename+filetype)
+                data_path = train_images_path if filetype == '.jpg' else train_labels_path
+                file_path = os.path.join(data_path, filename+filetype)
+                shutil.move(file_path, destination_path) 
 
 def main():
     dataset = Dataset('task1_dataset', 'task1_dataset/images', 'task1_dataset/labels')
 
     
-    dataset.change_object_ids()
+    dataset.randomly_split_train_val(150)
         
 
 if __name__ == "__main__":
